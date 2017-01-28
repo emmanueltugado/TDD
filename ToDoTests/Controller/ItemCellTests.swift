@@ -7,12 +7,27 @@
 //
 
 import XCTest
+@testable import ToDo
 
 class ItemCellTests: XCTestCase {
+    
+    var controller: ItemListViewController!
+    var tableView: UITableView!
+    let dataSource = FakeDataSource()
+    var cell: ItemCell!
     
     override func setUp() {
         super.setUp()
         // Put setup code here. This method is called before the invocation of each test method in the class.
+        
+        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+        controller = storyboard.instantiateViewController(withIdentifier: "ItemListViewController") as! ItemListViewController
+        _ = controller.view
+        
+        tableView = controller.tableView
+        tableView?.dataSource = dataSource
+        
+        cell = tableView?.dequeueReusableCell(withIdentifier: "ItemCell", for: IndexPath(row: 0, section: 0)) as! ItemCell
     }
     
     override func tearDown() {
@@ -20,16 +35,55 @@ class ItemCellTests: XCTestCase {
         super.tearDown()
     }
     
-    func testExample() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
+    func testSUT_HasNameLabel() {
+        XCTAssertNotNil(cell.titleLabel)
     }
     
-    func testPerformanceExample() {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
+    func testSUT_HasLocationLabel() {
+        XCTAssertNotNil(cell.locationLabel)
+    }
+    
+    func testSUT_HasDateLabel() {
+        XCTAssertNotNil(cell.dateLabel)
+    }
+    
+    func test_ConfigCell_SetsLabelTexts() {
+        let location = Location(name: "Bar")
+        let item = ToDoItem(title: "Foo",
+                            description: nil,
+                            timestamp: 1456150025,
+                            location: location)
+        cell.configCellWithItem(item: item)
+        
+        XCTAssertEqual(cell.titleLabel.text, "Foo")
+        XCTAssertEqual(cell.locationLabel.text, "Bar")
+        XCTAssertEqual(cell.dateLabel.text, "02/22/2016")
+    }
+    
+    func test_Title_WhenItemIsChecked_IsStrokeThrough() {
+        let location = Location(name: "Bar")
+        let item = ToDoItem(title: "Foo",
+                            description: nil,
+                            timestamp: 1456150025,
+                            location: location)
+        cell.configCellWithItem(item: item, checked: true)
+        
+        let attributedString = NSAttributedString(string: "Foo", attributes: [NSStrikethroughStyleAttributeName: NSUnderlineStyle.styleSingle.rawValue])
+        
+        XCTAssertEqual(cell.titleLabel.attributedText, attributedString)
+        XCTAssertNil(cell.locationLabel.text)
+        XCTAssertNil(cell.dateLabel.text)
+    }
+}
+
+extension ItemCellTests {
+    class FakeDataSource: NSObject, UITableViewDataSource {
+        func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+            return 1
+        }
+        
+        func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+            return UITableViewCell()
         }
     }
-    
 }

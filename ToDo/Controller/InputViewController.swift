@@ -7,29 +7,58 @@
 //
 
 import UIKit
+import CoreLocation
 
 class InputViewController: UIViewController {
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-
-        // Do any additional setup after loading the view.
-    }
-
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
-    }
+    @IBOutlet var titleTextField: UITextField!
+    @IBOutlet var dateTextField: UITextField!
+    @IBOutlet var locationTextField: UITextField!
+    @IBOutlet var descriptionTextField: UITextField!
+    @IBOutlet var addressTextField: UITextField!
+    @IBOutlet var saveButton: UIButton!
+    @IBOutlet var cancelButton: UIButton!
     
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
+    lazy var geocoder = CLGeocoder()
+    var itemManager: ItemManager?
+    
+    let dateFormatter: DateFormatter = {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MM/dd/yyyy"
+        return dateFormatter
+    }()
+    
+    @IBAction func save() {
+        print(#function)
+        guard let titleString = titleTextField.text, titleString.characters.count > 0 else { return }
+        
+        let date: Date?
+        if let dateText = self.dateTextField.text, dateText.characters.count > 0 {
+            date = dateFormatter.date(from: dateText)
+        } else {
+            date = nil
+        }
+        
+        let descriptionString = descriptionTextField.text
+        
+        if let locationName = locationTextField.text, locationName.characters.count > 0 {
+            if let address = addressTextField.text, address.characters.count > 0 {
+                print("setting the variable completionhandler of mockgeocoder")
+                geocoder.geocodeAddressString(address) { [unowned self] (placemarks, error) -> Void in
+                    let placemark = placemarks?.first
+                    
+                    let item = ToDoItem(title: titleString, description: descriptionString, timestamp: date?.timeIntervalSince1970, location: Location(name: locationName, coordinate: placemark?.location?.coordinate))
+                    
+                    self.itemManager?.addItem(item: item)
+                }
+            }
+        } else {
+            let item = ToDoItem(title: titleString,
+                                description: descriptionString,
+                                timestamp: date?.timeIntervalSince1970,
+                                location: nil)
+            self.itemManager?.addItem(item: item)
+        }
+    
+        dismiss(animated: true, completion: nil)
     }
-    */
-
 }
